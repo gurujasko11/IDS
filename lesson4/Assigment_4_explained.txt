@@ -1,0 +1,143 @@
+Predicting sentiment from product reviews
+=============================================
+follow some of the points below
+use data:  amazon_baby.csv
+
+1) Perform text cleaning
+We start by removing punctuation, so that words "cake." and "cake!" are counted as the same word.
+Write a function remove_punctuation that strips punctuation from a line of text
+Apply this function to every element in the review column of products, and save the
+result to a new column review_clean.
+
+def remove_punctuation(text);
+    import string
+    return.text.translate(None, string.punctuation)
+
+products['review_clean'] = products['review'].apply(remove_punctuation)
+
+Make sure to fill n/a values in the review column with empty strings (if applicable).
+The n/a values indicate empty reviews.
+
+products = products.fillna('review':''}) # fill in N/A's in the review collumn
+
+2) Extract Sentiments
+We will ignore all reviews with rating = 3, since they tend to have a neutral sentiment.
+
+Now, we will assign reviews with a rating of 4 or higher to be positive reviews,
+while the ones with rating of 2 or lower are negative. For the sentiment column,
+we use +1 for the positive class label and -1 for the negative class label.
+A good way is to create an anonymous function that converts a rating into a class
+label and then apply that function to every element in the rating column.
+
+3) Split into training and test sets
+
+4) Build the word count vector for each review
+
+We will now compute the word count for each word that appears in the reviews.
+A vector consisting of word counts is often referred to as bag-of-word features.
+Since most words occur in only a few reviews, word count vectors are sparse.
+For this reason, scikit-learn and many other tools use sparse matrices to
+store a collection of word count vectors. Refer to appropriate manuals to produce
+sparse word count vectors. General steps for extracting word count vectors are as follows:
+
+- Learn a vocabulary (set of all words) from the training data. Only the words that show
+  up in the training data will be considered for feature extraction.
+- Compute the occurrences of the words in each review and collect them into a row vector.
+- Build a sparse matrix where each row is the word count vector for the corresponding review.
+  Call this matrix train_matrix.
+- Using the same mapping between words and columns, convert the test data into a sparse
+  matrix test_matrix.
+
+from sklearn.feauture_extraction.text import CountVectorizer
+
+vectorizer = CountVectorizer(token_pattern = r'\b\w+\b')
+#Use thise token pattern to keep single-letter words
+#First learn vocabulary from the training data and assign columns to words
+#Then convert the training data into sparce_matrix
+train_matrix = vectorizer.fit_transform(train_data['review_clean'])
+#Then convert the test data into sparce matrix, using the ane word-column mapping
+test_matrix = vectorizer.transform(test_data['review_clean'])
+
+5) Train a sentiment classifier with logistic regression
+We will now use logistic regression to create a sentiment classifier on the training data.
+ - Learn a logistic regression classifier using the training data. If you are using scikit-learn,
+ you should create an instance of the LogisticRegression class and then call the method fit()
+ to train the classifier. This model should use the sparse word count matrix (train_matrix)
+ as features and the column sentiment of train_data as the target. Use the default values
+ for other parameters. Call this model sentiment_model.
+
+ - There should be over 100,000 coefficients in this sentiment_model. Recall from the lecture
+ that positive weights w_j correspond to weights that cause positive sentiment, while negative
+ weights correspond to negative sentiment. Calculate the number of positive (>= 0, which is
+ actually nonnegative) coefficients.
+
+6) Prediciting Sentiment
+These scores can be used to make class predictions as follows:
+
+y^i=+1 if w⊺h(xi)>0 ;  −1 if w⊺h(xi)≤0
+
+Using scores, write code to calculate predicted labels for sample_test_data.
+
+7) Probability Predictions
+Recall from the lectures that we can also calculate the probability predictions from
+the scores using:
+
+P(yi=+1|xi,w)= (1 +exp(−w⊺h(xi))
+
+Using the scores calculated previously, write code to calculate the probability that a sentiment
+is positive using the above formula. For each row, the probabilities should be a number
+in the range [0, 1].
+
+8) Find the most positive (and negative) review
+We now turn to examining the full test dataset, test_data, and use
+sklearn.linear_model.LogisticRegression to form predictions on all of the test data points.
+Using the sentiment_model, find the 20 reviews in the entire test_data with the highest probability
+of being classified as a positive review. We refer to these as the "most positive reviews."
+To calculate these top-20 reviews, use the following steps:
+ - Make probability predictions on test_data using the sentiment_model.
+ - Sort the data according to those predictions and pick the top 20.
+
+Now, let us repeat this exercise to find the "most negative reviews."
+Use the prediction probabilities to find the 20 reviews in the test_data with the
+lowest probability of being classified as a positive review. Repeat the same steps
+above but make sure you sort in the opposite order.
+
+8) Compute accuracy of the classifier
+We will now evaluate the accuracy of the trained classifier.
+Recall that the accuracy is given by accuracy=# correctly classified examples# total examples
+This can be computed as follows:
+ Step 1: Use the sentiment_model to compute class predictions.
+ Step 2: Count the number of data points when the predicted class labels match the ground truth labels.
+ Step 3: Divide the total number of correct predictions by the total number of data points in the dataset.
+
+9) Learn another classifier with fewer words
+
+significant_words = ['love','great','easy','old','little','perfect'loves',
+                     'well','able','car','broke','less','even','waste',
+		     'disappointed','work','product','money','would','return']
+There were a lot of words in the model we trained above. We will now train a simpler logistic
+regression model using only a subet of words that occur in the reviews. For this assignment,
+we selected 20 words to work with. Choose such 20.
+Compute a new set of word count vectors using only these words.
+The CountVectorizer class has a parameter that lets you limit the choice of words when building
+word count vectors.
+Compute word count vectors for the training and test data and obtain the sparse matrices
+train_matrix_word_subset and test_matrix_word_subset, respectively.
+
+10) Train a logistic regression model on a subset of data
+Now build a logistic regression classifier with train_matrix_word_subset as features and sentiment
+as the target. Call this model simple_model. Let us inspect the weights (coefficients) of the simple_model.
+First, build a table to store (word, coefficient) pairs.
+Sort the data frame by the coefficient value in descending order.
+
+11) Comparing models
+We will now compare the accuracy of the sentiment_model and the simple_model.
+First, compute the classification accuracy of the sentiment_model on the train_data.
+Now, compute the classification accuracy of the simple_model on the train_data.
+Next, compute the classification accuracy of the simple_model on the test_data.
+
+12) Baseline: Majority class prediction
+It is quite common to use the majority class classifier as the a baseline (or reference) model
+for comparison with your classifier model. The majority classifier model predicts the majority
+class for all data points. At the very least, you should healthily beat the majority class
+classifier, otherwise, the model is (usually) pointless.
